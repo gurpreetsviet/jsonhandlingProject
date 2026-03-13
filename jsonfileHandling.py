@@ -4,6 +4,7 @@ from tkinter import messagebox
 import json
 
 import os
+search_window=None
 root=Tk()
 # root.state("zoomed")
 root.geometry("1300x500")
@@ -54,11 +55,77 @@ def Update():
           messagebox.showinfo("Message","Kindly select any row to update form table First!")
           
 def Delete():
-     pass
+     if tree_table.selection():
+          emp_dct={}
+          if os.path.exists("empDataFile.json") and os.path.getsize("empDataFile.json")>0:
+               with open("empDataFile.json","r") as file:
+                    emp_dct=json.load(file)
+          emp_dct.pop(tree_table.item(tree_table.selection(),"text"))       
+          with open("empDataFile.json","w") as filew:
+               json.dump(emp_dct,filew,indent=4)
+          loadjson()
+          for e in entries:
+               e.delete(0,END)
+     else:
+          messagebox.showinfo("Message","Kindly select any row to update form table First!")
+# search function for emp search start
+
+def search_function(event):
+     s_text=s_entry.get()
+     emp_item_s=[]
+     for row in tree_table.get_children():
+          if tree_table.set(row,"Emp_Name")==s_text:
+               emp_item_s.append(tree_table.item(row,"values"))
+     if emp_item_s:
+          for im in tree_table.get_children():
+               tree_table.delete(im)
+          for tp in emp_item_s:
+               tree_table.insert("","end",values=tp)
+               print(f"{tp} {type(tp)}")
+     
 def Search():
-     pass
+     global search_window
+     global s_entry
+     if search_window==None or not search_window.wifo_exists():
+          search_window=Toplevel(root,)
+          search_window.geometry("400x100")
+          search_window.title("Search Employee")
+            # update window so size is calculated
+          search_window.update_idletasks()
+
+          # parent window position
+          x = root.winfo_x()
+          y = root.winfo_y()
+          parent_width = root.winfo_width()
+          parent_height = root.winfo_height()
+
+          # toplevel size
+          width = search_window.winfo_width()
+          height = search_window.winfo_height()
+
+          # calculate center position
+          pos_x = x + (parent_width//2 - width//2)
+          pos_y = y + (parent_height//2 - height//2)
+
+          search_window.geometry(f"{width}x{height}+{pos_x}+{pos_y}")
+          search_window.resizable(False,False)
+          search_window.attributes("-toolwindow", True)
+          search_window.grab_set()
+
+          s_entry=Entry(search_window,width=50, font=("Arial", 14))
+          s_entry.pack(fill="x",expand=True,pady="5",padx=5)
+          s_entry.focus()
+          s_entry.bind("<Return>",search_function)
+          def cancel_window():
+               global search_window
+               search_window.destroy()
+               search_window=None
+               loadjson()
+           # event when user clicks ❌ button
+          search_window.protocol("WM_DELETE_WINDOW", cancel_window)
+     
 def Cancel():
-     pass
+     root.destroy()
 def select_row(event):
      for i,e in enumerate(entries):
           e.delete(0,END)
